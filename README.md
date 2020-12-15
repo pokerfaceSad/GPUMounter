@@ -1,4 +1,13 @@
-GPUMounter is a kubernetes plugin which can **dynamically add or remove Nvidia GPU resources** for a **running** pod.
+# GPU Mounter
+
+GPU Mounter is a kubernetes plugin which enables add or remove GPU resources for running Pods.
+
+
+
+## Features
+
+* Supports add or remove GPU resources of running Pod without stopping or restarting
+* Compatible with kubernetes scheduler
 
 
 
