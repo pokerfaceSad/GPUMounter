@@ -1,0 +1,44 @@
+syntax = "proto3";
+package gpu_mount;
+
+message AddGPURequest {
+  string pod_name = 1;
+  string namespace = 2;
+  int32 gpu_num = 3;
+}
+
+message AddGPUResponse {
+  enum AddGPUResult
+  {
+    Success = 0;
+    InsufficientGPU = 1;
+    PodNotFound = 2;
+  }
+  AddGPUResult add_gpu_result = 1;
+}
+
+service AddGPUService {
+  rpc AddGPU (AddGPURequest) returns (AddGPUResponse) {};
+}
+
+message RemoveGPURequest {
+  string pod_name = 1;
+  string namespace = 2;
+  repeated string uuids = 3;
+  bool force = 4;
+}
+
+message RemoveGPUResponse {
+  enum RemoveGPUResult
+  {
+    Success = 0;
+    GPUBusy = 1;
+    PodNotFound = 2;
+    GPUNotFound = 4;
+  }
+  RemoveGPUResult remove_gpu_result = 1;
+}
+
+service RemoveGPUService {
+  rpc RemoveGPU (RemoveGPURequest) returns (RemoveGPUResponse) {};
+}

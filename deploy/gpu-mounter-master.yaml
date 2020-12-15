@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gpu-mounter-master
+  namespace: kube-system
+  labels:
+    app: gpu-mounter-master
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gpu-mounter-master
+  template:
+    metadata:
+      labels:
+        app: gpu-mounter-master
+    spec:
+      serviceAccountName: gpumounter
+      containers:
+        - name: gpu-mounter-master-container
+          image: pokerfacesad/gpu-mounter-master:latest
+          imagePullPolicy: Always
+          command: ["/bin/bash"]
+          args: ["-c", "/GPUMounter/GPUMounter-master"]
+          volumeMounts:
+            - name: log-dir
+              mountPath: /var/log/GPUMounter
+      volumes:
+        - name: log-dir
+          hostPath:
+            type: DirectoryOrCreate
+            path: /etc/GPUMounter/log
+#      nodeSelector:
+#        kubernetes.io/hostname: $master-hostname
