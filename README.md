@@ -1,5 +1,8 @@
 # GPU Mounter
 
+<img src="https://img.shields.io/github/license/pokerfaceSad/GPUMounter.svg"/>
+
+
 GPU Mounter is a kubernetes plugin which enables add or remove GPU resources for running Pods.
 
 
