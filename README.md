@@ -16,12 +16,12 @@ GPU Mounter is a kubernetes plugin which enables add or remove GPU resources for
 
 ## Prerequisite 
 
-* Kubernetes v1.16.2 / v1.18.6 (other version not tested)
-* Docker 19.03 (other version not tested)
+* Kubernetes v1.16.2 / v1.18.6 (other version not tested, v1.13+ is required, v1.15+ is recommended)
+* Docker 19.03/18.09 (other version not tested)
 * Nvidia GPU device plugin
 * `nvidia-container-runtime` (must be configured as default runtime)
 
-
+NOTE: if you are using GPU Mounter on Kubernetes v1.13 or v1.14, you need to [manually enable the feature `KubeletPodResources`](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/). It is enabled by default in Kubernetes v1.15+.
 
 ## Deploy
 
