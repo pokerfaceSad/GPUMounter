@@ -5,7 +5,7 @@
 
 GPU Mounter is a kubernetes plugin which enables add or remove GPU resources for running Pods.
 
-
+<img src="docs/images/SchematicDiagram.jpg" alt="Schematic Diagram Of GPU Dynamic Mount" style="zoom: 33%;" />
 
 ## Features
 
