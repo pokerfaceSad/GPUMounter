@@ -3,9 +3,9 @@
 <img src="https://img.shields.io/github/license/pokerfaceSad/GPUMounter.svg"/>
 
 
-GPU Mounter is a kubernetes plugin which enables add or remove GPU resources for running Pods.
+GPU Mounter is a kubernetes plugin which enables add or remove GPU resources for running Pods. This [Introduction(In Chinese)](https://zhuanlan.zhihu.com/p/338251170) is recommended to read which can help you understand what and why is GPU Mounter.
 
-<img src="docs/images/SchematicDiagram.jpg" alt="Schematic Diagram Of GPU Dynamic Mount" style="zoom: 33%;" />
+<img src="docs/images/SchematicDiagram.png" alt="Schematic Diagram Of GPU Dynamic Mount" style="zoom: 33%;" />
 
 ## Features
 
@@ -113,3 +113,12 @@ $ kubectl exec -it gpu-pod -- nvidia-smi -L
 GPU 0: Tesla V100-PCIE-32GB (UUID: GPU-f61ffc1a-9e61-1c0e-2211-4f8f252fe7bc)
 GPU 1: Tesla V100-PCIE-32GB (UUID: GPU-fedd3550-8528-3579-8824-b6629082b3e4)
 ```
+
+## License
+
+This project is licensed under the Apache-2.0 License.
+
+## Issues and Contributing
+
+* Please let me know by [Issues](https://github.com/pokerfaceSad/GPUMounter/issues/new) if you experience any problems
+* [Pull requests](https://github.com/pokerfaceSad/GPUMounter/pulls) are very welcomed, if you have any ideas to make GPU Mounter better.
