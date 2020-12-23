@@ -5,7 +5,7 @@
 
 GPU Mounter is a kubernetes plugin which enables add or remove GPU resources for running Pods. This [Introduction(In Chinese)](https://zhuanlan.zhihu.com/p/338251170) is recommended to read which can help you understand what and why is GPU Mounter.
 
-<img src="docs/images/SchematicDiagram.png" alt="Schematic Diagram Of GPU Dynamic Mount" style="zoom: 33%;" />
+<img src="docs/images/SchematicDiagram.png" alt="Schematic Diagram Of GPU Dynamic Mount"  />
 
 ## Features
 
@@ -23,17 +23,33 @@ GPU Mounter is a kubernetes plugin which enables add or remove GPU resources for
 
 NOTE: if you are using GPU Mounter on Kubernetes v1.13 or v1.14, you need to [manually enable the feature `KubeletPodResources`](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/). It is enabled by default in Kubernetes v1.15+.
 
+
+
 ## Deploy
+
+* label GPU nodes with `gpu-mounter-enable=enable`
+
+```shell
+kubectl label node <nodename> gpu-mounter-enable=enable
+```
+
+* deploy
 
 ```bash
 ./deploy.sh deploy
+```
+
+* uninstall
+
+```shell
+./deploy.sh uninstall
 ```
 
 
 
 ## Quick Start
 
-### create a GPU pod
+### create a Pod
 
 NOTE: Set environment variable `NVIDIA_VISIBLE_DEVICES`  to tell `nvidia-container-runtime` add CUDA library for the container, so we can check GPU state by `nvidia-smi` in the container.
 
@@ -43,6 +59,9 @@ kind: Pod
 metadata:
   name: gpu-pod
 spec:
+  # run a pod on the node which enable gpu mounter
+  nodeSelector:
+    gpu-mounter-enable: enable
   containers:
     - name: cuda-container
       image: tensorflow/tensorflow:1.13.2-gpu

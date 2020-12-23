@@ -14,6 +14,8 @@ spec:
     spec:
       serviceAccountName: gpumounter
       hostPID: true
+      nodeSelector:
+        gpu-mounter-enable: enable
       containers:
         - name: gpu-mounter-worker
           image: pokerfacesad/gpu-mounter-worker:latest
