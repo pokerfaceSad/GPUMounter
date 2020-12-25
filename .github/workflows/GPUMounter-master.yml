@@ -1,0 +1,38 @@
+name: GPUMounter-master CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  IMAGE_NAME: gpu-mounter-master
+  DOCKERFILE_PATH: docker/GPUMounter-master/Dockerfile
+  DOCKERHUB_USER: pokerfacesad
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build image
+        run: docker build . --file $DOCKERFILE_PATH --tag $IMAGE_NAME
+
+      - name: Log into DockerHub registry
+        run: echo "${{ secrets.ACCESS_TOKEN }}" | docker login -u $DOCKERHUB_USER --password-stdin
+
+      - name: Push image
+        run: |
+          IMAGE_ID=$DOCKERHUB_USER/$IMAGE_NAME
+          
+          VERSION=latest
+          
+          echo IMAGE_ID=$IMAGE_ID
+          
+          echo VERSION=$VERSION
+          
+          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+
+          docker push $IMAGE_ID:$VERSION
