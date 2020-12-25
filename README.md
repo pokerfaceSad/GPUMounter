@@ -1,7 +1,6 @@
 # GPU Mounter
 
-<img src="https://img.shields.io/github/license/pokerfaceSad/GPUMounter.svg"/>
-
+![GPUMounter License](https://img.shields.io/github/license/pokerfaceSad/GPUMounter.svg)![GPUMounter master CI badge](https://github.com/pokerfaceSad/GPUMounter/workflows/GPUMounter-master%20CI/badge.svg)![GPUMounter worker CI badge](https://github.com/pokerfaceSad/GPUMounter/workflows/GPUMounter-worker%20CI/badge.svg)
 
 GPU Mounter is a kubernetes plugin which enables add or remove GPU resources for running Pods. This [Introduction(In Chinese)](https://zhuanlan.zhihu.com/p/338251170) is recommended to read which can help you understand what and why is GPU Mounter.
 
@@ -21,7 +20,7 @@ GPU Mounter is a kubernetes plugin which enables add or remove GPU resources for
 * Nvidia GPU device plugin
 * `nvidia-container-runtime` (must be configured as default runtime)
 
-NOTE: if you are using GPU Mounter on Kubernetes v1.13 or v1.14, you need to [manually enable the feature `KubeletPodResources`](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/). It is enabled by default in Kubernetes v1.15+.
+NOTE: If you are using GPU Mounter on Kubernetes v1.13 or v1.14, you need to [manually enable the feature `KubeletPodResources`](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/). It is enabled by default in Kubernetes v1.15+.
 
 
 
@@ -51,7 +50,11 @@ kubectl label node <nodename> gpu-mounter-enable=enable
 
 ### create a Pod
 
-NOTE: Set environment variable `NVIDIA_VISIBLE_DEVICES`  to tell `nvidia-container-runtime` add CUDA library for the container, so we can check GPU state by `nvidia-smi` in the container.
+NOTE:
+
+Set environment variable `NVIDIA_VISIBLE_DEVICES`  to tell `nvidia-container-runtime` add CUDA library for the container, so we can check GPU state by `nvidia-smi` in the container. 
+
+Set the `gpu-mounter-enable: enable` nodeSelector to ensure the pod is scheduled to GPUMounter enabled nodes.
 
 ```yaml
 apiVersion: v1
@@ -59,7 +62,6 @@ kind: Pod
 metadata:
   name: gpu-pod
 spec:
-  # run a pod on the node which enable gpu mounter
   nodeSelector:
     gpu-mounter-enable: enable
   containers:
