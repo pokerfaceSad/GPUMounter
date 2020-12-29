@@ -4,15 +4,11 @@
 
 GPU Mounter is a kubernetes plugin which enables add or remove GPU resources for running Pods. This [Introduction(In Chinese)](https://zhuanlan.zhihu.com/p/338251170) is recommended to read which can help you understand what and why is GPU Mounter.
 
-<center><img src="docs/images/SchematicDiagram.png" alt="Schematic Diagram Of GPU Dynamic Mount"  /></center>
-
-
+<div align="center"> <img src="docs/images/SchematicDiagram.png" alt="Schematic Diagram Of GPU Dynamic Mount"  /> </div>
 ## Features
 
 * Supports add or remove GPU resources of running Pod without stopping or restarting
 * Compatible with kubernetes scheduler
-
-
 
 ## Prerequisite 
 
@@ -22,8 +18,6 @@ GPU Mounter is a kubernetes plugin which enables add or remove GPU resources for
 * `nvidia-container-runtime` (must be configured as default runtime)
 
 NOTE: If you are using GPU Mounter on Kubernetes v1.13 or v1.14, you need to [manually enable the feature `KubeletPodResources`](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/). It is enabled by default in Kubernetes v1.15+.
-
-
 
 ## Deploy
 
@@ -45,19 +39,17 @@ kubectl label node <nodename> gpu-mounter-enable=enable
 ./deploy.sh uninstall
 ```
 
-
-
 ## Quick Start
 
 See [QuickStart.md](docs/guide/QuickStart.md)
 
+## FAQ
 
+See  [FAQ.md](docs/guide/FAQ.md)
 
 ## License
 
 This project is licensed under the Apache-2.0 License.
-
-
 
 ## Issues and Contributing
 
