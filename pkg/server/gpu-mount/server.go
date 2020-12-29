@@ -74,6 +74,12 @@ func (gpuMountImpl GPUMountImpl) AddGPU(_ context.Context, request *gpu_mount.Ad
 		if err != nil {
 			Logger.Error("Mount GPU: " + targetGPU.String() + " to Pod: " + request.PodName + " in Namespace: " + request.Namespace + " failed")
 			Logger.Error(err)
+			for _, freeGPU := range gpuResources {
+				err = clientset.CoreV1().Pods(targetPod.Namespace).Delete(freeGPU.PodName, metav1.NewDeleteOptions(0))
+				if err != nil {
+					Logger.Error("Failed to release GPU: ", freeGPU.String())
+				}
+			}
 			return nil, errors.New("Service Internal Error ")
 		}
 		Logger.Info("Mount GPU: " + targetGPU.String() + " to Pod: " + request.PodName + " in Namespace: " + request.Namespace + " successfully")
