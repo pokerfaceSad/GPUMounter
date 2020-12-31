@@ -75,7 +75,7 @@ func (gpuMountImpl GPUMountImpl) AddGPU(_ context.Context, request *gpu_mount.Ad
 			Logger.Error("Mount GPU: " + targetGPU.String() + " to Pod: " + request.PodName + " in Namespace: " + request.Namespace + " failed")
 			Logger.Error(err)
 			for _, freeGPU := range gpuResources {
-				err = clientset.CoreV1().Pods(targetPod.Namespace).Delete(freeGPU.PodName, metav1.NewDeleteOptions(0))
+				err = clientset.CoreV1().Pods(gpu.GPUPoolNamespace).Delete(freeGPU.PodName, metav1.NewDeleteOptions(0))
 				if err != nil {
 					Logger.Error("Failed to release GPU: ", freeGPU.String())
 				}
@@ -137,7 +137,7 @@ func (gpuMountImpl GPUMountImpl) RemoveGPU(_ context.Context, request *gpu_mount
 			return nil, err
 		}
 		// delete slave pod
-		err = clientset.CoreV1().Pods(targetPod.Namespace).Delete(removeGPU.PodName, &metav1.DeleteOptions{})
+		err = clientset.CoreV1().Pods(gpu.GPUPoolNamespace).Delete(removeGPU.PodName, &metav1.DeleteOptions{})
 		if err != nil {
 			Logger.Error("Failed to delete Slave Pod: ", removeGPU.PodName)
 			return nil, err
