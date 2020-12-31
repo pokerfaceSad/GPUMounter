@@ -12,4 +12,6 @@ const (
 	InsufficientGPU     = "InsufficientGPU"
 	SuccessfullyCreated = "SuccessfullyCreated"
 	FailedCreated       = "FailedCreated"
+
+	GPUPoolNamespace = "gpu-pool"
 )
