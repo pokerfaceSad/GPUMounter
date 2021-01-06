@@ -1,7 +1,7 @@
 FROM golang:1.14.10 as build-env
 RUN go env -w GOPROXY=https://goproxy.cn,direct && \
     go env -w CGO_ENABLED=1 && \
-    go env -w GOSUMDB="sum.golang.google.cn" && \
+    go env -w GOSUMDB="sum.golang.google.cn"
 
 WORKDIR /GPUMounter
 COPY go.mod go.sum ./
