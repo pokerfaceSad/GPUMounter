@@ -3,8 +3,6 @@ name: GPUMounter-master CI
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
 
 env:
   IMAGE_NAME: gpu-mounter-master

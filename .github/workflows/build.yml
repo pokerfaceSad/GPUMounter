@@ -1,0 +1,23 @@
+name: build
+
+on:
+  pull_request:
+    branches: [ master ]
+
+env:
+  MASTER_IMAGE_NAME: gpu-mounter-master
+  WORKER_IMAGE_NAME: gpu-mounter-worker
+  MASTER_DOCKERFILE_PATH: docker/GPUMounter-master/Dockerfile
+  WORKER_DOCKERFILE_PATH: docker/GPUMounter-worker/Dockerfile
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build GPUMounter-master image
+        run: docker build . --file $MASTER_DOCKERFILE_PATH --tag $MASTER_IMAGE_NAME
+
+      - name: Build GPUMounter-master image
+        run: docker build . --file $WORKER_DOCKERFILE_PATH --tag $WORKER_IMAGE_NAME
