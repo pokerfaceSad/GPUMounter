@@ -3,12 +3,13 @@ package allocator
 import (
 	"GPUMounter/pkg/config"
 	. "GPUMounter/pkg/util/log"
+	"context"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 )
 
 func TestGetAvailableGPU(t *testing.T) {
-	InitLogger("./test.log")
+	InitLogger(".", "log")
 	defer Logger.Sync()
 
 	gpuAllocator, err := NewGPUAllocator()
@@ -21,7 +22,7 @@ func TestGetAvailableGPU(t *testing.T) {
 		Logger.Error("Connect to k8s failed")
 		panic(err)
 	}
-	pod, err := clientset.CoreV1().Pods("default").Get("gpu-pod2", metav1.GetOptions{})
+	pod, err := clientset.CoreV1().Pods("default").Get(context.TODO(), "gpu-pod2", metav1.GetOptions{})
 	if err != nil {
 		Logger.Error("get pod " + pod.Name + " failed")
 		panic(err)

@@ -40,7 +40,7 @@ func AddGPU(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	pod, err := clientset.CoreV1().Pods(namespace).Get(podName, metav1.GetOptions{})
+	pod, err := clientset.CoreV1().Pods(namespace).Get(context.TODO(), podName, metav1.GetOptions{})
 	if err != nil {
 		if k8s_errors.IsNotFound(err) {
 			Logger.Error("No pod: " + podName + " in namespace: " + namespace)
@@ -145,7 +145,7 @@ func RemoveGPU(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	pod, err := clientset.CoreV1().Pods(namespace).Get(podName, metav1.GetOptions{})
+	pod, err := clientset.CoreV1().Pods(namespace).Get(context.TODO(), podName, metav1.GetOptions{})
 	if err != nil {
 		if k8s_errors.IsNotFound(err) {
 			Logger.Error("No pod: " + podName + " in namespace: " + namespace)
@@ -245,7 +245,7 @@ func findAllWorker() (map[string]corev1.Pod, error) {
 		Logger.Error(err.Error())
 		return nil, err
 	}
-	podList, err := clientSet.CoreV1().Pods("kube-system").List(metav1.ListOptions{
+	podList, err := clientSet.CoreV1().Pods("kube-system").List(context.TODO(), metav1.ListOptions{
 		LabelSelector: "app=gpu-mounter-worker",
 	})
 	if err != nil {

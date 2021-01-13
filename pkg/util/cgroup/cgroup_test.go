@@ -3,6 +3,7 @@ package cgroup
 import (
 	"GPUMounter/pkg/config"
 	"GPUMounter/pkg/util/log"
+	"context"
 	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os/exec"
@@ -15,7 +16,7 @@ func TestGetCgroupName(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	pod, err := clientset.CoreV1().Pods("default").Get("gpu-pod", metav1.GetOptions{})
+	pod, err := clientset.CoreV1().Pods("default").Get(context.TODO(), "gpu-pod", metav1.GetOptions{})
 	if err != nil {
 		panic(err)
 	}

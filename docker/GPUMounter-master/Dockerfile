@@ -1,5 +1,5 @@
 FROM golang:1.14.10 as build-env
-RUN go env -w GOPROXY=https://goproxy.cn,direct && \
+RUN go env -w GOPROXY=https://goproxy.io,direct && \
     go env -w CGO_ENABLED=1 && \
     go env -w GOSUMDB="sum.golang.google.cn"
 

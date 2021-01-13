@@ -39,7 +39,7 @@ func (gpuMountImpl GPUMountImpl) AddGPU(_ context.Context, request *gpu_mount.Ad
 		Logger.Error("Connect to k8s failed")
 		return nil, errors.New("Service Internal Error ")
 	}
-	targetPod, err := clientset.CoreV1().Pods(request.Namespace).Get(request.PodName, metav1.GetOptions{})
+	targetPod, err := clientset.CoreV1().Pods(request.Namespace).Get(context.TODO(), request.PodName, metav1.GetOptions{})
 	if err != nil {
 		if k8s_error.IsNotFound(err) {
 			Logger.Error("No such Pod: " + request.PodName + " in Namepsace: " + request.Namespace)
@@ -75,7 +75,7 @@ func (gpuMountImpl GPUMountImpl) AddGPU(_ context.Context, request *gpu_mount.Ad
 			Logger.Error("Mount GPU: " + targetGPU.String() + " to Pod: " + request.PodName + " in Namespace: " + request.Namespace + " failed")
 			Logger.Error(err)
 			for _, freeGPU := range gpuResources {
-				err = clientset.CoreV1().Pods(gpu.GPUPoolNamespace).Delete(freeGPU.PodName, metav1.NewDeleteOptions(0))
+				err = clientset.CoreV1().Pods(gpu.GPUPoolNamespace).Delete(context.TODO(), freeGPU.PodName, *metav1.NewDeleteOptions(0))
 				if err != nil {
 					Logger.Error("Failed to release GPU: ", freeGPU.String())
 				}
@@ -98,7 +98,7 @@ func (gpuMountImpl GPUMountImpl) RemoveGPU(_ context.Context, request *gpu_mount
 		Logger.Error("Connect to k8s failed")
 		return nil, errors.New("Service Internal Error ")
 	}
-	targetPod, err := clientset.CoreV1().Pods(request.Namespace).Get(request.PodName, metav1.GetOptions{})
+	targetPod, err := clientset.CoreV1().Pods(request.Namespace).Get(context.TODO(), request.PodName, metav1.GetOptions{})
 	if err != nil {
 		if k8s_error.IsNotFound(err) {
 			Logger.Error("No such Pod: " + request.PodName + " in Namepsace: " + request.Namespace)
@@ -137,7 +137,7 @@ func (gpuMountImpl GPUMountImpl) RemoveGPU(_ context.Context, request *gpu_mount
 			return nil, err
 		}
 		// delete slave pod
-		err = clientset.CoreV1().Pods(gpu.GPUPoolNamespace).Delete(removeGPU.PodName, &metav1.DeleteOptions{})
+		err = clientset.CoreV1().Pods(gpu.GPUPoolNamespace).Delete(context.TODO(), removeGPU.PodName, metav1.DeleteOptions{})
 		if err != nil {
 			Logger.Error("Failed to delete Slave Pod: ", removeGPU.PodName)
 			return nil, err
