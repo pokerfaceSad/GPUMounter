@@ -47,7 +47,7 @@ func (gpuAllocator *GPUAllocator) GetAvailableGPU(ownerPod *corev1.Pod, gpuNum i
 	var slavePodNames []string
 	for idx := 0; idx < gpuNum; idx++ {
 		// try create a gpu pod on specify node
-		slavePod := newGPUPod(ownerPod, 1)
+		slavePod := newGPUSlavePod(ownerPod, 1)
 		slavePod, err = clientset.CoreV1().Pods(slavePod.Namespace).Create(context.TODO(), slavePod, metav1.CreateOptions{})
 		if err != nil {
 			Logger.Error(err)
@@ -59,7 +59,7 @@ func (gpuAllocator *GPUAllocator) GetAvailableGPU(ownerPod *corev1.Pod, gpuNum i
 	}
 
 	ch := make(chan string)
-	go checkState(slavePodNames, ch)
+	go checkCreateState(slavePodNames, ch)
 	switch <-ch {
 	case gpu.InsufficientGPU:
 		for _, slavePodName := range slavePodNames {
@@ -121,7 +121,36 @@ func (gpuAllocator *GPUAllocator) GetRemoveGPU(ownerPod *corev1.Pod, uuids []str
 	return removeGPUs, nil
 }
 
-func newGPUPod(ownerPod *corev1.Pod, gpuNum int) *corev1.Pod {
+func (gpuAllocator *GPUAllocator) DeleteSlavePods(slavePodNames []string) error {
+	Logger.Info("Deleting slave pods: ", strings.Join(slavePodNames, ", "))
+	clientset, err := config.GetClientSet()
+	if err != nil {
+		Logger.Error("Connect to k8s failed")
+		return err
+	}
+	for _, slavePodName := range slavePodNames {
+		err = clientset.CoreV1().Pods(gpu.GPUPoolNamespace).Delete(context.TODO(), slavePodName, metav1.DeleteOptions{})
+		if err != nil {
+			Logger.Error("Failed to delete Slave Pod: ", slavePodName)
+			return err
+		}
+	}
+
+	ch := make(chan string)
+	go checkDeleteState(slavePodNames, ch)
+
+	switch <-ch {
+	case gpu.FailedDeleted:
+		Logger.Error("Failed to delete slave pods")
+		return errors.New("Failed to delete slave pods ")
+	case gpu.SuccessfullyDeleted:
+		Logger.Info("Successfully delete slave pods")
+		return nil
+	}
+	return errors.New("Unkown status from checking goroutine ")
+
+}
+func newGPUSlavePod(ownerPod *corev1.Pod, gpuNum int) *corev1.Pod {
 	// generate random ID
 	randBytes := make([]byte, 3)
 	rand.Read(randBytes)
@@ -168,9 +197,9 @@ func newGPUPod(ownerPod *corev1.Pod, gpuNum int) *corev1.Pod {
 	}
 }
 
-func checkState(names []string, ch chan string) {
+func checkCreateState(podNames []string, ch chan string) {
 
-	Logger.Info("Checking Pods: " + strings.Join(names, ", ") + " state")
+	Logger.Info("Checking Pods: " + strings.Join(podNames, ", ") + " state")
 	clientset, err := config.GetClientSet()
 	if err != nil {
 		Logger.Error(err)
@@ -180,7 +209,7 @@ func checkState(names []string, ch chan string) {
 
 	for {
 		flag := true
-		for _, slavePodName := range names {
+		for _, slavePodName := range podNames {
 			pod, err := clientset.CoreV1().Pods(gpu.GPUPoolNamespace).Get(context.TODO(), slavePodName, metav1.GetOptions{})
 			if err != nil {
 				if k8s_errors.IsNotFound(err) {
@@ -209,8 +238,43 @@ func checkState(names []string, ch chan string) {
 			}
 		}
 		if flag {
-			Logger.Info("Pods: " + strings.Join(names, ", ") + " are running")
+			Logger.Info("Pods: " + strings.Join(podNames, ", ") + " are running")
 			ch <- gpu.SuccessfullyCreated
+			return
+		}
+	}
+}
+
+func checkDeleteState(podNames []string, ch chan string) {
+
+	Logger.Info("Checking Pods: " + strings.Join(podNames, ", ") + " state")
+	clientset, err := config.GetClientSet()
+	if err != nil {
+		Logger.Error(err)
+		Logger.Error("Connect to k8s failed")
+		ch <- gpu.FailedDeleted
+		return
+	}
+
+	for {
+		flag := true
+		for _, slavePodName := range podNames {
+			_, err := clientset.CoreV1().Pods(gpu.GPUPoolNamespace).Get(context.TODO(), slavePodName, metav1.GetOptions{})
+			if err != nil {
+				if k8s_errors.IsNotFound(err) {
+					// this slavePod has been deleted
+					continue
+				} else {
+					Logger.Error(err)
+					ch <- gpu.FailedDeleted
+					return
+				}
+			}
+			flag = false
+		}
+		if flag {
+			Logger.Info("Pods: " + strings.Join(podNames, ", ") + " deleted successfully")
+			ch <- gpu.SuccessfullyDeleted
 			return
 		}
 	}

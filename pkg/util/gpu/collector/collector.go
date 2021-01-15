@@ -87,6 +87,7 @@ func (gpuCollector *GPUCollector) GetGPUByUUID(uuid string) (*device.NvidiaGPU, 
 }
 
 func (gpuCollector *GPUCollector) UpdateGPUStatus() error {
+	Logger.Info("Updating GPU status")
 	_, err := os.Stat(gpu.SocketPath)
 	if os.IsNotExist(err) {
 		Logger.Error("Can not found ", gpu.SocketPath)
@@ -125,7 +126,7 @@ func (gpuCollector *GPUCollector) UpdateGPUStatus() error {
 						nvidiaGPU.State = device.GPU_ALLOCATED_STATE
 						nvidiaGPU.PodName = pod.Name
 						nvidiaGPU.Namespace = pod.Namespace
-						Logger.Info("GPU: ", nvidiaGPU.DeviceFilePath, " allocated to Pod: ", pod.Name, " in Namespace ", pod.Namespace)
+						Logger.Debug("GPU: ", nvidiaGPU.DeviceFilePath, " allocated to Pod: ", pod.Name, " in Namespace ", pod.Namespace)
 					}
 				}
 			}
@@ -152,7 +153,8 @@ func (gpuCollector *GPUCollector) GetPodGPUResources(podName string, namespace s
 	}
 	var gpuResources []*device.NvidiaGPU
 	for _, gpuDev := range gpuCollector.GPUList {
-		if gpuDev.PodName == podName || strings.Contains(gpuDev.PodName, podName+"-slave-pod-") {
+		if (gpuDev.PodName == podName && gpuDev.Namespace == namespace) ||
+			(strings.Contains(gpuDev.PodName, podName+"-slave-pod-") && gpuDev.Namespace == gpu.GPUPoolNamespace) {
 			gpuResources = append(gpuResources, gpuDev)
 		}
 	}

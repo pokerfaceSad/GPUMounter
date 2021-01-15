@@ -4,7 +4,6 @@ import (
 	gpu_mount "GPUMounter/pkg/api/gpu-mount"
 	"GPUMounter/pkg/device"
 	"GPUMounter/pkg/util/cgroup"
-	"GPUMounter/pkg/util/gpu/collector/nvml"
 	. "GPUMounter/pkg/util/log"
 	"GPUMounter/pkg/util/namespace"
 	"errors"
@@ -83,27 +82,26 @@ func UnmountGPU(pod *corev1.Pod, gpu *device.NvidiaGPU, forceRemove bool) error 
 	if err != nil {
 		Logger.Error("Failed to get running processes in Pod: ", pod.Name, " Namespace: ", pod.Namespace)
 		Logger.Error(err)
-		return nil
-	}
-
-	processInfos, err := gpu.GetRunningProcess()
-	if err != nil {
-		Logger.Error("Failed to get process info on GPU: ", gpu.DeviceFilePath)
-		Logger.Error(err)
 		return err
 	}
 
-	podGPUProcesses := getPodGPUProcess(pids, processInfos)
-	if len(podGPUProcesses) != 0 {
-		if !forceRemove {
-			return errors.New(string(gpu_mount.RemoveGPUResponse_GPUBusy))
-		}
+	podGPUProcesses, err := GetPodGPUProcesses(pod, gpu)
+	if err != nil {
+		Logger.Error("Failed to get GPU: ", gpu.DeviceFilePath+" status in Pod: ", pod.Name, " in Namespace: ", pod.Namespace)
+		Logger.Error(err)
+		return err
 	}
+	if podGPUProcesses != nil && !forceRemove {
+		Logger.Info("GPU: ", gpu.DeviceFilePath, " status in Pod: ", pod.Name, " in Namespace: ", pod.Namespace, " is busy")
+		return errors.New(string(gpu_mount.RemoveGPUResponse_GPUBusy))
+	}
+
 	// remove permission
 	if err := cgroup.RemoveGPUDevicePermission(cgroupPath, gpu); err != nil {
 		Logger.Error("Remove GPU " + gpu.String() + "failed")
 		return err
 	}
+
 	// delete device files
 	PID, err := strconv.Atoi(pids[0])
 	if err != nil {
@@ -111,8 +109,8 @@ func UnmountGPU(pod *corev1.Pod, gpu *device.NvidiaGPU, forceRemove bool) error 
 		Logger.Error(err)
 		return err
 	}
-
 	Logger.Info("Successfully get PID: " + strconv.Itoa(PID) + " of Pod: " + pod.Name + " Container: " + containerID)
+
 	// enter container namespace
 	cfg := &namespace.Config{
 		Mount:  true, // Execute into mount namespace
@@ -124,7 +122,7 @@ func UnmountGPU(pod *corev1.Pod, gpu *device.NvidiaGPU, forceRemove bool) error 
 	}
 
 	// kill all running procs
-	if len(podGPUProcesses) != 0 {
+	if podGPUProcesses != nil {
 		Logger.Info("Killing running gpu Processes", strings.Join(podGPUProcesses, ", "), " on Pod: ", pod.Name, " Namespace: ", pod.Namespace)
 		if err := namespace.KillRunningGPUProcesses(cfg, podGPUProcesses); err != nil {
 			Logger.Error("Failed to kill gpu processes in Target PID Namespace: ", PID, " Pod: ", pod.Name, " Namespace: ", pod.Namespace)
@@ -136,14 +134,48 @@ func UnmountGPU(pod *corev1.Pod, gpu *device.NvidiaGPU, forceRemove bool) error 
 	return nil
 }
 
-func getPodGPUProcess(podPIDS []string, processInfos []*nvml.ProcessInfo) []string {
-	var gpuProcess []string
-	for _, processInfo := range processInfos {
-		if ContainString(podPIDS, strconv.Itoa(int(processInfo.Pid))) {
-			gpuProcess = append(gpuProcess, strconv.Itoa(int(processInfo.Pid)))
+/**
+get all gpu proc pid in pod, return nil if no gpu proc in pod
+*/
+func GetPodGPUProcesses(pod *corev1.Pod, gpu *device.NvidiaGPU) ([]string, error) {
+	// get devices control group
+	containerID := pod.Status.ContainerStatuses[0].ContainerID
+	containerID = strings.Replace(containerID, "docker://", "", 1)
+	Logger.Info("Pod: " + pod.Name + " container ID: " + containerID)
+	cgroupPath, err := cgroup.GetCgroupName("cgroupfs", pod, containerID)
+	if err != nil {
+		Logger.Error("Get cgroup path for Pod: " + pod.Name + " failed")
+		return nil, err
+	}
+	Logger.Debug("Successfully get cgroup path: " + cgroupPath + " for Pod: " + pod.Name)
+
+	// get running processes
+	podProcess, err := cgroup.GetCgroupPIDs(cgroupPath)
+	if err != nil {
+		Logger.Error("Failed to get running processes in Pod: ", pod.Name, " Namespace: ", pod.Namespace)
+		Logger.Error(err)
+		return nil, err
+	}
+
+	gpuProcess, err := gpu.GetRunningProcess()
+	if err != nil {
+		Logger.Error("Failed to get process info on GPU: ", gpu.DeviceFilePath)
+		Logger.Error(err)
+		return nil, err
+	}
+
+	var podGPUProcess []string
+	for _, processInfo := range gpuProcess {
+		if ContainString(podProcess, strconv.Itoa(int(processInfo.Pid))) {
+			podGPUProcess = append(podGPUProcess, strconv.Itoa(int(processInfo.Pid)))
 		}
 	}
-	return gpuProcess
+	if len(podGPUProcess) != 0 {
+		Logger.Debug("{Namespace: ", pod.Namespace, " Pod: ", pod.Name, "}proc PID: ", strings.Join(podGPUProcess, ", "), " running on GPU: ", gpu.UUID)
+		return podGPUProcess, nil
+	}
+	Logger.Debug("{Namespace: ", pod.Namespace, " Pod: ", pod.Name, "} has no proc running on GPU: ", gpu.UUID)
+	return nil, nil
 }
 
 func ContainString(stringList []string, aimString string) bool {

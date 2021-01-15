@@ -110,7 +110,7 @@ func (gpuMountImpl GPUMountImpl) RemoveGPU(_ context.Context, request *gpu_mount
 			return nil, errors.New("Service Internal Error ")
 		}
 	}
-	Logger.Info("Successfully get Pod: " + request.Namespace + " in cluster")
+	Logger.Info("Successfully get Pod: ", request.PodName, "in Namespace: ", request.Namespace)
 
 	removeGPUs, err := gpuMountImpl.GetRemoveGPU(targetPod, request.Uuids)
 	if err != nil {
@@ -124,6 +124,25 @@ func (gpuMountImpl GPUMountImpl) RemoveGPU(_ context.Context, request *gpu_mount
 			RemoveGpuResult: gpu_mount.RemoveGPUResponse_GPUNotFound,
 		}, nil
 	}
+
+	// check all gpu status
+	var slavePodNames []string
+	for _, removeGPU := range removeGPUs {
+		slavePodNames = append(slavePodNames, removeGPU.PodName)
+		gpuProc, err := util.GetPodGPUProcesses(targetPod, removeGPU)
+		if err != nil {
+			Logger.Error("Failed to get process info on GPU: ", removeGPU.DeviceFilePath)
+			Logger.Error(err)
+			return nil, err
+		}
+		if gpuProc != nil && !request.Force {
+			Logger.Info("GPU: ", removeGPU.DeviceFilePath, " status in Pod: ", targetPod.Name, " in Namespace: ", targetPod.Namespace, " is busy")
+			return &gpu_mount.RemoveGPUResponse{
+				RemoveGpuResult: gpu_mount.RemoveGPUResponse_GPUBusy,
+			}, nil
+		}
+	}
+
 	for _, removeGPU := range removeGPUs {
 		err := util.UnmountGPU(targetPod, removeGPU, request.Force)
 		if err != nil {
@@ -132,19 +151,19 @@ func (gpuMountImpl GPUMountImpl) RemoveGPU(_ context.Context, request *gpu_mount
 					RemoveGpuResult: gpu_mount.RemoveGPUResponse_GPUBusy,
 				}, nil
 			}
-			Logger.Error("Failed to get process info on GPU: ", removeGPU.DeviceFilePath)
+			Logger.Error("Failed unmount GPU: ", removeGPU.DeviceFilePath, " on Pod: ", removeGPU.PodName, " in Namespace: ", removeGPU.Namespace)
 			Logger.Error(err)
-			return nil, err
-		}
-		// delete slave pod
-		err = clientset.CoreV1().Pods(gpu.GPUPoolNamespace).Delete(context.TODO(), removeGPU.PodName, metav1.DeleteOptions{})
-		if err != nil {
-			Logger.Error("Failed to delete Slave Pod: ", removeGPU.PodName)
 			return nil, err
 		}
 		Logger.Info("Successfully unmount GPU: ", removeGPU.DeviceFilePath)
 	}
 
+	// delete slave pod
+	err = gpuMountImpl.DeleteSlavePods(slavePodNames)
+	if err != nil {
+		Logger.Error(err)
+		return nil, err
+	}
 	return &gpu_mount.RemoveGPUResponse{
 		RemoveGpuResult: gpu_mount.RemoveGPUResponse_Success,
 	}, nil
