@@ -26,6 +26,7 @@ NOTE: if you are using GPU Mounter on Kubernetes v1.13 or v1.14, you need to [ma
 ## Deploy
 
 ```bash
+chmod u+x deploy.sh
 ./deploy.sh deploy
 ```
 
