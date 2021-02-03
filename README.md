@@ -31,6 +31,7 @@ kubectl label node <nodename> gpu-mounter-enable=enable
 * deploy
 
 ```bash
+chmod u+x deploy.sh
 ./deploy.sh deploy
 ```
 
