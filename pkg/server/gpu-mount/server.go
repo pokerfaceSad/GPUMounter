@@ -22,7 +22,7 @@ func NewGPUMounter() (*GPUMountImpl, error) {
 	gpuMounter := &GPUMountImpl{}
 	tmp, err := allocator.NewGPUAllocator()
 	if err != nil {
-		Logger.Error("Filed to init gpu allocator")
+		Logger.Error("Failed to init gpu allocator")
 		return nil, err
 	}
 	Logger.Info("Successfully created gpu allocator")
