@@ -4,8 +4,9 @@ import (
 	"GPUMounter/pkg/config"
 	. "GPUMounter/pkg/util/log"
 	"context"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestGetAvailableGPU(t *testing.T) {

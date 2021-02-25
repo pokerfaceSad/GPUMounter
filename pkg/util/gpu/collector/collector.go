@@ -7,12 +7,13 @@ import (
 	. "GPUMounter/pkg/util/log"
 	"context"
 	"fmt"
-	"google.golang.org/grpc"
-	podresourcesapi "k8s.io/kubernetes/pkg/kubelet/apis/podresources/v1alpha1"
 	"net"
 	"os"
 	"strings"
 	"time"
+
+	"google.golang.org/grpc"
+	podresourcesapi "k8s.io/kubernetes/pkg/kubelet/apis/podresources/v1alpha1"
 )
 
 type GPUCollector struct {

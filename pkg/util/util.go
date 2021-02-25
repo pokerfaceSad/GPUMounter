@@ -7,9 +7,10 @@ import (
 	. "GPUMounter/pkg/util/log"
 	"GPUMounter/pkg/util/namespace"
 	"errors"
-	corev1 "k8s.io/api/core/v1"
 	"strconv"
 	"strings"
+
+	corev1 "k8s.io/api/core/v1"
 )
 
 func MountGPU(pod *corev1.Pod, gpu *device.NvidiaGPU) error {
