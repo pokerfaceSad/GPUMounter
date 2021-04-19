@@ -9,6 +9,7 @@ import (
 	. "GPUMounter/pkg/util/log"
 	"context"
 	"errors"
+
 	k8s_error "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -53,8 +54,18 @@ func (gpuMountImpl GPUMountImpl) AddGPU(_ context.Context, request *gpu_mount.Ad
 	}
 	Logger.Info("Successfully get Pod: " + request.Namespace + " in cluster")
 
+	// if target pod is already entire mounted, it's not allowed to mount more gpu
+	if gpuMountImpl.IsEntireMount(targetPod) {
+		Logger.Error("Pod already entire mounted, not allowed to mount other gpu before unmount")
+		return nil, errors.New(gpu.FailedCreated)
+	}
+
 	gpuNum := int(request.GpuNum)
-	gpuResources, err := gpuMountImpl.GetAvailableGPU(targetPod, gpuNum)
+	gpuNumPerPod := 1
+	if request.IsEntireMount {
+		gpuNumPerPod = gpuNum
+	}
+	gpuResources, err := gpuMountImpl.GetAvailableGPU(targetPod, gpuNum, gpuNumPerPod)
 
 	if err != nil {
 		if err.Error() == gpu.InsufficientGPU {

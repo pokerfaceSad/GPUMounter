@@ -5,6 +5,7 @@ message AddGPURequest {
   string pod_name = 1;
   string namespace = 2;
   int32 gpu_num = 3;
+  bool is_entire_mount = 4;
 }
 
 message AddGPUResponse {

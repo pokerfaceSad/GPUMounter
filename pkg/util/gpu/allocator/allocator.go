@@ -11,12 +11,13 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
+
 	corev1 "k8s.io/api/core/v1"
 	k8s_errors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"strconv"
-	"strings"
 )
 
 type GPUAllocator struct {
@@ -36,7 +37,7 @@ func NewGPUAllocator() (*GPUAllocator, error) {
 	return gpuAllocator, nil
 }
 
-func (gpuAllocator *GPUAllocator) GetAvailableGPU(ownerPod *corev1.Pod, gpuNum int) ([]*device.NvidiaGPU, error) {
+func (gpuAllocator *GPUAllocator) GetAvailableGPU(ownerPod *corev1.Pod, totalGpuNum int, gpuNumPerPod int) ([]*device.NvidiaGPU, error) {
 	clientset, err := config.GetClientSet()
 	if err != nil {
 		Logger.Error(err)
@@ -45,9 +46,9 @@ func (gpuAllocator *GPUAllocator) GetAvailableGPU(ownerPod *corev1.Pod, gpuNum i
 	}
 
 	var slavePodNames []string
-	for idx := 0; idx < gpuNum; idx++ {
+	for idx := 0; idx < totalGpuNum/gpuNumPerPod; idx++ {
 		// try create a gpu pod on specify node
-		slavePod := newGPUSlavePod(ownerPod, 1)
+		slavePod := newGPUSlavePod(ownerPod, gpuNumPerPod)
 		slavePod, err = clientset.CoreV1().Pods(slavePod.Namespace).Create(context.TODO(), slavePod, metav1.CreateOptions{})
 		if err != nil {
 			Logger.Error(err)
@@ -105,11 +106,14 @@ func (gpuAllocator *GPUAllocator) GetRemoveGPU(ownerPod *corev1.Pod, uuids []str
 		Logger.Error("Failed to Get Pod: ", ownerPod.Name, " Namespace: ", ownerPod.Namespace, " GPU resources")
 		return nil, err
 	}
+
 	var removeGPUs []*device.NvidiaGPU
+	isEntireMount := gpuAllocator.IsEntireMount(ownerPod)
 	for _, gpuDev := range gpuResources {
 		// GPU Mounter can only unmount the gpu mounted by GPU Mounter
 		// so the removed gpu should belong to slave pod
-		if util.ContainString(uuids, gpuDev.UUID) && gpuDev.PodName != ownerPod.Name {
+		// if entire mount pod, remove all gpu
+		if (isEntireMount || util.ContainString(uuids, gpuDev.UUID)) && gpuDev.PodName != ownerPod.Name {
 			removeGPUs = append(removeGPUs, gpuDev)
 		}
 	}
@@ -150,6 +154,33 @@ func (gpuAllocator *GPUAllocator) DeleteSlavePods(slavePodNames []string) error 
 	return errors.New("Unkown status from checking goroutine ")
 
 }
+
+func (gpuAllocator *GPUAllocator) IsEntireMount(pod *corev1.Pod) bool {
+	Logger.Info("Check whether pod %s/%s is entire mount", pod.Namespace, pod.Name)
+	gpuResources, err := gpuAllocator.GetPodGPUResources(pod.Name, pod.Namespace)
+	if err != nil {
+		Logger.Error(err)
+		Logger.Error("Failed to Check Pod: ", pod.Name, " Namespace: ", pod.Namespace, " is entire mount or not")
+		return false
+	}
+	// entire mount pod has less slave pod than its gpu num
+	slavePodNames := make(map[string]interface{}, 0)
+	gpuNum := 0
+	for _, gpuDev := range gpuResources {
+		if gpuDev.PodName != pod.Name {
+			slavePodNames[gpuDev.PodName] = struct{}{}
+		}
+		gpuNum++
+	}
+
+	// TODO: here we regard a mount as entire mount if pod's gpu num less than slave pods,
+	// is it possible to find a better method?
+	if len(slavePodNames) < gpuNum {
+		return true
+	}
+	return false
+}
+
 func newGPUSlavePod(ownerPod *corev1.Pod, gpuNum int) *corev1.Pod {
 	// generate random ID
 	randBytes := make([]byte, 3)
