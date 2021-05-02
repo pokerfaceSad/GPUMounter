@@ -17,3 +17,12 @@ const (
 
 	GPUPoolNamespace = "gpu-pool"
 )
+
+type MountType string
+
+const (
+	EntireMount MountType = "entire-mount"
+	SingleMount MountType = "single-mount"
+	NoMount MountType = "no-mount"
+	UnknownMount MountType = "unknown-mount"
+)

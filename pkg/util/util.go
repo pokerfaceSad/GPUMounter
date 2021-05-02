@@ -4,6 +4,7 @@ import (
 	gpu_mount "GPUMounter/pkg/api/gpu-mount"
 	"GPUMounter/pkg/device"
 	"GPUMounter/pkg/util/cgroup"
+	"GPUMounter/pkg/util/gpu"
 	. "GPUMounter/pkg/util/log"
 	"GPUMounter/pkg/util/namespace"
 	"errors"
@@ -186,4 +187,25 @@ func ContainString(stringList []string, aimString string) bool {
 		}
 	}
 	return false
+}
+
+func CanMount(mountType gpu.MountType, request *gpu_mount.AddGPURequest) bool {
+	if mountType == gpu.UnknownMount {
+		Logger.Warn("Pod mount type is unknown, not allowed")
+		return false
+	}
+
+	// if target pod is mounted and request is entire mount, it's not allowed to do it
+	if mountType != gpu.NoMount && request.IsEntireMount {
+		Logger.Warn("Pod already mounted, not allowed to entire mount gpu before unmount")
+		return false
+	}
+
+	// if target pod is already entire mounted, it's not allowed to mount more gpu
+	if mountType == gpu.EntireMount {
+		Logger.Warn("Pod already mounted, not allowed to entire mount gpu before unmount")
+		return false
+	}
+
+	return true
 }

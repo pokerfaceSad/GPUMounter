@@ -54,9 +54,7 @@ func (gpuMountImpl GPUMountImpl) AddGPU(_ context.Context, request *gpu_mount.Ad
 	}
 	Logger.Info("Successfully get Pod: " + request.Namespace + " in cluster")
 
-	// if target pod is already entire mounted, it's not allowed to mount more gpu
-	if gpuMountImpl.IsEntireMount(targetPod) {
-		Logger.Error("Pod already entire mounted, not allowed to mount other gpu before unmount")
+	if !util.CanMount(gpuMountImpl.GetMountType(targetPod), request) {
 		return nil, errors.New(gpu.FailedCreated)
 	}
 
