@@ -49,11 +49,13 @@ No devices found.
 
 #### 1. add GPU
 
-`GET /addgpu/namespace/:namespace/pod/:pod/gpu/:gpuNum`
+- isEntireMount: if enable this, gpu cards will be bind with faster speed and immediate failure return if resource is not enough, the removement of gpu will be entire too.
+
+`GET /addgpu/namespace/:namespace/pod/:pod/gpu/:gpuNum/isEntireMount/:isEntireMount`
 
 ```shell
 curl --location \
---request GET 'http://127.0.0.1:8009/api/v1/namespaces/kube-system/services/gpu-mounter-service/proxy/addgpu/namespace/default/pod/gpu-pod/gpu/4'
+--request GET 'http://127.0.0.1:8009/api/v1/namespaces/kube-system/services/gpu-mounter-service/proxy/addgpu/namespace/default/pod/gpu-pod/gpu/4/isEntireMount/false'
 ```
 
 check GPU state
