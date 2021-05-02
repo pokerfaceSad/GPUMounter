@@ -156,7 +156,7 @@ func (gpuAllocator *GPUAllocator) DeleteSlavePods(slavePodNames []string) error 
 }
 
 func (gpuAllocator *GPUAllocator) IsEntireMount(pod *corev1.Pod) bool {
-	Logger.Info("Check whether pod %s/%s is entire mount", pod.Namespace, pod.Name)
+	Logger.Infof("Check whether pod %s/%s is entire mount", pod.Namespace, pod.Name)
 	gpuResources, err := gpuAllocator.GetPodGPUResources(pod.Name, pod.Namespace)
 	if err != nil {
 		Logger.Error(err)
