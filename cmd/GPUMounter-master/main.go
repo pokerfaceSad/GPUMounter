@@ -27,17 +27,19 @@ func AddGPU(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	namespace := ps.ByName("namespace")
 	gpuNum_str := ps.ByName("gpuNum")
 	isEntireMountStr := ps.ByName("isEntireMount")
-	Logger.Info("Pod: ", podName, " Namespace: ", namespace, " GPU Num: ", gpuNum_str, "Is entire mount: ", isEntireMountStr)
+	Logger.Info("Pod: ", podName, " Namespace: ", namespace, " GPU Num: ", gpuNum_str, " Is entire mount: ", isEntireMountStr)
 	gpuNum, err := strconv.ParseInt(gpuNum_str, 10, 32)
 	if err != nil {
 		Logger.Error("Invalid param gpuNum: ", gpuNum_str)
 		http.Error(w, "Invalid param gpuNum: "+gpuNum_str, 400)
+		return
 	}
 
 	isEntireMount, err := strconv.ParseBool(isEntireMountStr)
 	if err != nil {
-		Logger.Errorf("Invalid param isEntireMount: %s, set to false", isEntireMountStr)
-		isEntireMount = false
+		Logger.Errorf("Invalid param isEntireMount: %s", isEntireMountStr)
+		http.Error(w, "Invalid param isEntireMount: "+isEntireMountStr+"(should be true or false)", 400)
+		return
 	}
 
 	clientset, err := config.GetClientSet()
@@ -87,9 +89,9 @@ func AddGPU(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	defer conn.Close()
 	c := gpu_mount.NewAddGPUServiceClient(conn)
 	resp, err := c.AddGPU(context.TODO(), &gpu_mount.AddGPURequest{
-		PodName:   podName,
-		Namespace: namespace,
-		GpuNum:    int32(gpuNum),
+		PodName:       podName,
+		Namespace:     namespace,
+		GpuNum:        int32(gpuNum),
 		IsEntireMount: isEntireMount,
 	})
 	if err != nil {
@@ -135,16 +137,13 @@ func RemoveGPU(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	podName := ps.ByName("pod")
 	namespace := ps.ByName("namespace")
 	force_str := ps.ByName("force")
-	var force bool
-	if force_str == "0" {
-		force = false
-	} else if force_str == "1" {
-		force = true
-	} else {
-		http.Error(w, "Invalid parameter force: "+force_str+"(should be 0 or 1)", 400)
+	force, err := strconv.ParseBool(force_str)
+	if err != nil {
+		Logger.Errorf("Invalid param force: " + force_str)
+		http.Error(w, "Invalid parameter force: "+force_str+"(should be true or false)", 400)
 		return
 	}
-	Logger.Info("Pod: ", podName, " Namespace: ", namespace, " UUIDs: ", strings.Join(uuids, ", "))
+	Logger.Info("Pod: ", podName, " Namespace: ", namespace, " UUIDs: ", strings.Join(uuids, ", "), " force: ", force)
 
 	clientset, err := config.GetClientSet()
 	if err != nil {
@@ -231,7 +230,7 @@ func main() {
 
 	router := httprouter.New()
 	router.GET("/", Index)
-	router.GET("/addgpu/namespace/:namespace/pod/:pod/gpu/:gpuNum", AddGPU)
+	router.GET("/addgpu/namespace/:namespace/pod/:pod/gpu/:gpuNum/isEntireMount/:isEntireMount", AddGPU)
 	router.POST("/removegpu/namespace/:namespace/pod/:pod/force/:force", RemoveGPU)
 	srv := &http.Server{
 		Handler: router,
