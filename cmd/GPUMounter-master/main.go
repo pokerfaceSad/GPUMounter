@@ -26,11 +26,18 @@ func AddGPU(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	podName := ps.ByName("pod")
 	namespace := ps.ByName("namespace")
 	gpuNum_str := ps.ByName("gpuNum")
-	Logger.Info("Pod: ", podName, " Namespace: ", namespace, " GPU Num: ", gpuNum_str)
+	isEntireMountStr := ps.ByName("isEntireMount")
+	Logger.Info("Pod: ", podName, " Namespace: ", namespace, " GPU Num: ", gpuNum_str, "Is entire mount: ", isEntireMountStr)
 	gpuNum, err := strconv.ParseInt(gpuNum_str, 10, 32)
 	if err != nil {
 		Logger.Error("Invalid param gpuNum: ", gpuNum_str)
 		http.Error(w, "Invalid param gpuNum: "+gpuNum_str, 400)
+	}
+
+	isEntireMount, err := strconv.ParseBool(isEntireMountStr)
+	if err != nil {
+		Logger.Errorf("Invalid param isEntireMount: %s, set to false", isEntireMountStr)
+		isEntireMount = false
 	}
 
 	clientset, err := config.GetClientSet()
@@ -83,6 +90,7 @@ func AddGPU(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		PodName:   podName,
 		Namespace: namespace,
 		GpuNum:    int32(gpuNum),
+		IsEntireMount: isEntireMount,
 	})
 	if err != nil {
 		Logger.Error("Failed to call add gpu service")

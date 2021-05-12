@@ -28,7 +28,7 @@ func TestGetAvailableGPU(t *testing.T) {
 		Logger.Error("get pod " + pod.Name + " failed")
 		panic(err)
 	}
-	gpuResources, err := gpuAllocator.GetAvailableGPU(pod, 2)
+	gpuResources, err := gpuAllocator.GetAvailableGPU(pod, 2, 1)
 	if err != nil {
 		panic(err)
 	}

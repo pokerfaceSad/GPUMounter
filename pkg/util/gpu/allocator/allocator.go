@@ -108,12 +108,12 @@ func (gpuAllocator *GPUAllocator) GetRemoveGPU(ownerPod *corev1.Pod, uuids []str
 	}
 
 	var removeGPUs []*device.NvidiaGPU
-	isEntireMount := gpuAllocator.IsEntireMount(ownerPod)
+	mountType := gpuAllocator.GetMountType(ownerPod)
 	for _, gpuDev := range gpuResources {
 		// GPU Mounter can only unmount the gpu mounted by GPU Mounter
 		// so the removed gpu should belong to slave pod
 		// if entire mount pod, remove all gpu
-		if (isEntireMount || util.ContainString(uuids, gpuDev.UUID)) && gpuDev.PodName != ownerPod.Name {
+		if (mountType == gpu.EntireMount || util.ContainString(uuids, gpuDev.UUID)) && gpuDev.PodName != ownerPod.Name {
 			removeGPUs = append(removeGPUs, gpuDev)
 		}
 	}
@@ -155,15 +155,19 @@ func (gpuAllocator *GPUAllocator) DeleteSlavePods(slavePodNames []string) error 
 
 }
 
-func (gpuAllocator *GPUAllocator) IsEntireMount(pod *corev1.Pod) bool {
-	Logger.Info("Check whether pod %s/%s is entire mount", pod.Namespace, pod.Name)
+func (gpuAllocator *GPUAllocator) GetMountType(pod *corev1.Pod) gpu.MountType {
+	Logger.Infof("Get pod %s/%s mount type", pod.Namespace, pod.Name)
 	gpuResources, err := gpuAllocator.GetPodGPUResources(pod.Name, pod.Namespace)
 	if err != nil {
 		Logger.Error(err)
-		Logger.Error("Failed to Check Pod: ", pod.Name, " Namespace: ", pod.Namespace, " is entire mount or not")
-		return false
+		Logger.Error("Failed to get Pod: ", pod.Name, " Namespace: ", pod.Namespace, " mount type")
+		return gpu.UnknownMount
 	}
-	// entire mount pod has less slave pod than its gpu num
+
+	if len(gpuResources) == 0 {
+		return gpu.NoMount
+	}
+
 	slavePodNames := make(map[string]interface{}, 0)
 	gpuNum := 0
 	for _, gpuDev := range gpuResources {
@@ -173,12 +177,13 @@ func (gpuAllocator *GPUAllocator) IsEntireMount(pod *corev1.Pod) bool {
 		gpuNum++
 	}
 
-	// TODO: here we regard a mount as entire mount if pod's gpu num less than slave pods,
-	// is it possible to find a better method?
+	// entire mount pod has less slave pod than its gpu num
+	// TODO: here we regard a mount as entire mount if pod's gpu num less than slave pods, any better way?
 	if len(slavePodNames) < gpuNum {
-		return true
+		return gpu.EntireMount
+	} else {
+		return gpu.SingleMount
 	}
-	return false
 }
 
 func newGPUSlavePod(ownerPod *corev1.Pod, gpuNum int) *corev1.Pod {
