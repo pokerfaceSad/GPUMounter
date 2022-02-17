@@ -26,6 +26,10 @@ spec:
             - containerPort: 1200
           command: ["/bin/bash"]
           args: ["-c", "/GPUMounter/GPUMounter-worker"]
+          env:
+            - name: CGROUP_DRIVER
+              value: "cgroupfs"
+              # value: "systemd"
           volumeMounts:
             - name: cgroup
               mountPath: /sys/fs/cgroup

@@ -22,7 +22,12 @@ func MountGPU(pod *corev1.Pod, gpu *device.NvidiaGPU) error {
 	containerID := pod.Status.ContainerStatuses[0].ContainerID
 	containerID = strings.Replace(containerID, "docker://", "", 1)
 	Logger.Info("Pod :" + pod.Name + " container ID: " + containerID)
-	cgroupPath, err := cgroup.GetCgroupName("cgroupfs", pod, containerID)
+	cgroupDriver, err := cgroup.GetCgroupDriver()
+	if err != nil {
+		Logger.Error("Get cgroup driver failed")
+		return err
+	}
+	cgroupPath, err := cgroup.GetCgroupName(cgroupDriver, pod, containerID)
 	if err != nil {
 		Logger.Error("Get cgroup path for Pod: " + pod.Name + " failed")
 		return err
@@ -72,7 +77,12 @@ func UnmountGPU(pod *corev1.Pod, gpu *device.NvidiaGPU, forceRemove bool) error 
 	containerID := pod.Status.ContainerStatuses[0].ContainerID
 	containerID = strings.Replace(containerID, "docker://", "", 1)
 	Logger.Info("Pod :" + pod.Name + " container ID: " + containerID)
-	cgroupPath, err := cgroup.GetCgroupName("cgroupfs", pod, containerID)
+	cgroupDriver, err := cgroup.GetCgroupDriver()
+	if err != nil {
+		Logger.Error("Get cgroup driver failed")
+		return err
+	}
+	cgroupPath, err := cgroup.GetCgroupName(cgroupDriver, pod, containerID)
 	if err != nil {
 		Logger.Error("Get cgroup path for Pod: " + pod.Name + " failed")
 		return err
@@ -144,7 +154,12 @@ func GetPodGPUProcesses(pod *corev1.Pod, gpu *device.NvidiaGPU) ([]string, error
 	containerID := pod.Status.ContainerStatuses[0].ContainerID
 	containerID = strings.Replace(containerID, "docker://", "", 1)
 	Logger.Info("Pod: " + pod.Name + " container ID: " + containerID)
-	cgroupPath, err := cgroup.GetCgroupName("cgroupfs", pod, containerID)
+	cgroupDriver, err := cgroup.GetCgroupDriver()
+	if err != nil {
+		Logger.Error("Get cgroup driver failed")
+		return nil, err
+	}
+	cgroupPath, err := cgroup.GetCgroupName(cgroupDriver, pod, containerID)
 	if err != nil {
 		Logger.Error("Get cgroup path for Pod: " + pod.Name + " failed")
 		return nil, err

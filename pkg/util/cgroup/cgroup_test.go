@@ -23,7 +23,12 @@ func TestGetCgroupName(t *testing.T) {
 	containerID := pod.Status.ContainerStatuses[0].ContainerID
 	containerID = strings.Replace(containerID, "docker://", "", 1)
 	fmt.Println(containerID)
-	cgroupName, err := GetCgroupName("cgroupfs", pod, containerID)
+	cgroupDriver, err := GetCgroupDriver()
+	if err != nil {
+		fmt.Println("Get cgroup driver failed")
+		panic(err)
+	}
+	cgroupName, err := GetCgroupName(cgroupDriver, pod, containerID)
 	if err != nil {
 		panic(err)
 	}

@@ -81,7 +81,7 @@ func (gpuAllocator *GPUAllocator) GetAvailableGPU(ownerPod *corev1.Pod, totalGpu
 		}
 		return nil, errors.New(gpu.FailedCreated)
 	case gpu.SuccessfullyCreated:
-		Logger.Info("Successfully create Slave Pod: %s, for Owner Pod: %s ", strings.Join(slavePodNames, ", "), ownerPod.Name)
+		Logger.Infof("Successfully create Slave Pod: %s, for Owner Pod: %s ", strings.Join(slavePodNames, ", "), ownerPod.Name)
 		var availableGPUResource []*device.NvidiaGPU
 		for _, slavePodName := range slavePodNames {
 			gpuResources, err := gpuAllocator.GetPodGPUResources(slavePodName, gpu.GPUPoolNamespace)

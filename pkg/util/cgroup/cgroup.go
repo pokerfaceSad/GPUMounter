@@ -75,6 +75,14 @@ func (cgroupName CgroupName) ToCgroupfs() string {
 	return "/" + path.Join(cgroupName...)
 }
 
+func GetCgroupDriver() (string, error) {
+	cgroupDriver := os.Getenv("CGROUP_DRIVER")
+	if cgroupDriver != "systemd" && cgroupDriver != "cgroupfs" {
+		return "", fmt.Errorf("unsupported cgroup driver: %s", cgroupDriver)
+	}
+	return cgroupDriver, nil
+}
+
 func GetCgroupName(cgroupDriver string, pod *corev1.Pod, containerID string) (string, error) {
 	containerRoot := NewCgroupName([]string{}, "kubepods")
 	PodCgroupNamePrefix := "pod"
