@@ -55,5 +55,5 @@ This project is licensed under the Apache-2.0 License.
 
 ## Issues and Contributing
 
-* Please let me know by [Issues](https://github.com/pokerfaceSad/GPUMounter/issues/new) if you experience any problems
+* Please let me know by [Issues](https://github.com/pokerfaceSad/GPUMounter/issues/new) if you experience any problems.
 * [Pull requests](https://github.com/pokerfaceSad/GPUMounter/pulls) are very welcomed, if you have any ideas to make GPU Mounter better.
